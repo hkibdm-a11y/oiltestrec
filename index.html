@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>桜井・森香ノート研究室 - 檢測記錄</title>
+  <title>桜井・森香ノート研究室 - 檢測記錄精油檢測記錄系統</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="森香研究室">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    /* 隱藏原生 radio 按鈕，透過 label 設計 UI */
     input[type="radio"]:checked + div {
       border-color: currentColor;
       background-color: var(--checked-bg, #f3f4f6);
@@ -20,19 +19,16 @@
 </head>
 <body class="bg-gray-100 text-gray-800 antialiased pb-12">
 
-  <!-- 頂部導航 (加入 Logo 及 研究室名稱) -->
   <header class="bg-slate-800 text-white p-3 sticky top-0 z-50 shadow flex justify-between items-center">
     <div class="flex items-center gap-2">
-      <!-- 確保 LOGO.png 與 index.html 放喺同一個 Folder -->
       <img src="LOGO.png" alt="Logo" class="w-9 h-9 rounded-full object-cover bg-white border border-slate-600">
-      <h1 class="font-bold text-base tracking-wide">桜井・森香ノート研究室精油檢測記錄系統</h1>
+      <h1 class="font-bold text-base tracking-wide">桜井・森香ノート研究室 - 檢測記錄精油檢測記錄系統</h1>
     </div>
     <span id="recordCount" class="text-xs bg-slate-700 px-2 py-1 rounded whitespace-nowrap">0 筆記錄</span>
   </header>
 
   <main class="p-4 max-w-lg mx-auto space-y-4">
 
-    <!-- QR 掃描按鈕與視窗 -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
       <div id="reader" class="w-full hidden rounded-lg overflow-hidden mb-3"></div>
       <button id="scanBtn" onclick="toggleScanner()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 shadow transition">
@@ -40,17 +36,14 @@
       </button>
     </div>
 
-    <!-- 檢測資料登記表單 -->
     <form id="recordForm" onsubmit="saveRecord(event)" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-4">
       <h2 class="font-bold text-gray-700 text-sm border-b pb-2">🧪 檢測數據登記</h2>
 
-      <!-- 樣本編號 -->
       <div>
         <label class="block text-xs font-semibold text-gray-500 mb-1">樣本編號</label>
         <input type="text" id="sampleId" required placeholder="掃碼或手動輸入" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
       </div>
 
-      <!-- 日期與時間 -->
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1">檢測日期</label>
@@ -62,13 +55,23 @@
         </div>
       </div>
 
-      <!-- 折射率 -->
+      <!-- 新增：精油與品牌 -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">精油</label>
+          <input type="text" id="oilName" required placeholder="例如：真實薰衣草" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">品牌</label>
+          <input type="text" id="brandName" required placeholder="例如：Florihana" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
+        </div>
+      </div>
+
       <div>
         <label class="block text-xs font-semibold text-gray-500 mb-1">折射率 (20°C)</label>
         <input type="number" step="0.0001" id="refractiveIndex" placeholder="例如 1.4720" class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
       </div>
 
-      <!-- 結果 / 判定 (三格按鈕) -->
       <div>
         <label class="block text-xs font-semibold text-gray-500 mb-1">結果 / 判定</label>
         <div class="flex gap-2">
@@ -93,7 +96,6 @@
         </div>
       </div>
 
-      <!-- 備註欄 (可輸入 60-80 字) -->
       <div>
         <label class="block text-xs font-semibold text-gray-500 mb-1">備註 (選填)</label>
         <textarea id="remarks" rows="3" placeholder="請輸入檢測狀況或備註事項（約60-80字）..." class="w-full p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none bg-gray-50"></textarea>
@@ -104,7 +106,6 @@
       </button>
     </form>
 
-    <!-- 備份與匯出區塊 -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
       <h2 class="font-bold text-gray-700 text-sm border-b pb-2">📂 資料庫備份與管理</h2>
       <div class="grid grid-cols-2 gap-2">
@@ -121,7 +122,6 @@
       </label>
     </div>
 
-    <!-- 歷史記錄清單 -->
     <div class="space-y-2 pb-6">
       <h2 class="font-bold text-gray-700 text-sm px-1">📝 本機檢測清單</h2>
       <div id="recordsList" class="space-y-2">
@@ -136,7 +136,6 @@
     let html5QrCode = null;
     let isScanning = false;
 
-    // 初始化自動填入預設時間
     function initDefaults() {
       const now = new Date();
       document.getElementById('testDate').value = now.toISOString().split('T')[0];
@@ -145,7 +144,6 @@
       document.getElementById('sampleTime').value = `${hours}:${mins}`;
     }
 
-    // 啟動 / 關閉 相機掃描
     function toggleScanner() {
       const readerElem = document.getElementById('reader');
       const btnText = document.getElementById('scanBtnText');
@@ -164,7 +162,6 @@
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
           (decodedText) => {
-            // 掃描成功：自動填入樣本編號並震動反饋
             document.getElementById('sampleId').value = decodedText;
             initDefaults();
             if (navigator.vibrate) navigator.vibrate(100);
@@ -185,7 +182,6 @@
       return JSON.parse(localStorage.getItem(DB_KEY) || '[]');
     }
 
-    // 儲存記錄
     function saveRecord(e) {
       e.preventDefault();
       
@@ -199,6 +195,8 @@
       const newEntry = {
         id: Date.now(),
         sampleId: document.getElementById('sampleId').value.trim(),
+        oilName: document.getElementById('oilName').value.trim(),
+        brandName: document.getElementById('brandName').value.trim(),
         testDate: document.getElementById('testDate').value,
         sampleTime: document.getElementById('sampleTime').value,
         refractiveIndex: document.getElementById('refractiveIndex').value,
@@ -210,14 +208,16 @@
       records.unshift(newEntry);
       localStorage.setItem(DB_KEY, JSON.stringify(records));
       
-      // 清空部分欄位以便連續掃描
+      // 清空部分欄位，保留日期時間方便連續輸入
       document.getElementById('sampleId').value = '';
+      document.getElementById('oilName').value = '';
+      document.getElementById('brandName').value = '';
       document.getElementById('refractiveIndex').value = '';
       document.getElementById('remarks').value = '';
       document.querySelectorAll('input[name="testResult"]').forEach(r => r.checked = false);
       
       renderList();
-      if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // 儲存成功震動提示
+      if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
       alert("記錄已儲存！");
     }
 
@@ -251,9 +251,12 @@
         const card = document.createElement('div');
         card.className = "bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm text-xs relative";
         card.innerHTML = `
-          <div class="flex justify-between items-center pr-6 mb-2">
+          <div class="flex justify-between items-center pr-6 mb-1">
             <span class="font-bold text-sm text-blue-700"># ${r.sampleId}</span>
             <span class="text-gray-400">${r.testDate} ${r.sampleTime}</span>
+          </div>
+          <div class="text-gray-700 font-medium mb-2 text-[13px]">
+            🧴 ${r.brandName || '--'} - ${r.oilName || '--'}
           </div>
           <div class="grid grid-cols-2 text-gray-600 pt-1 border-t">
             <div class="py-1">折射率: <span class="font-mono text-gray-900">${r.refractiveIndex || '--'}</span></div>
@@ -266,19 +269,20 @@
       });
     }
 
-    // 匯出 CSV 檔 (加入備註欄位)
     function exportCSV() {
       const records = getStoredData();
       if (!records.length) return alert("目前沒有可匯出的數據");
 
-      const header = ["樣本編號", "日期", "採樣時間", "折射率", "結果", "備註", "建立時間"];
+      const header = ["樣本編號", "精油", "品牌", "日期", "採樣時間", "折射率", "結果", "備註", "建立時間"];
       const rows = records.map(r => [
         `"${r.sampleId}"`,
+        `"${r.oilName || ''}"`,
+        `"${r.brandName || ''}"`,
         `"${r.testDate}"`,
         `"${r.sampleTime}"`,
         `"${r.refractiveIndex}"`,
         `"${r.testResult}"`,
-        `"${(r.remarks || '').replace(/"/g, '""')}"`, // 處理 CSV 內的引號與換行
+        `"${(r.remarks || '').replace(/"/g, '""')}"`,
         `"${r.createdAt}"`
       ]);
 
@@ -332,7 +336,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // 初始化
     initDefaults();
     renderList();
   </script>
