@@ -23,9 +23,9 @@
   <header class="bg-slate-800 text-white p-3 sticky top-0 z-50 shadow flex justify-between items-center">
     <div class="flex items-center gap-2">
       <img src="LOGO.png" alt="Logo" class="w-9 h-9 rounded-full object-cover bg-white border border-slate-600">
-      <h1 class="font-bold text-base tracking-wide">桜井・森香ノート研究室 - 精油檢測記錄系統</h1>
+      <h1 class="font-bold text-base tracking-wide flex-1 text-sm md:text-base truncate">桜井・森香ノート研究室 - 精油檢測記錄系統</h1>
     </div>
-    <span id="recordCount" class="text-xs bg-slate-700 px-2 py-1 rounded whitespace-nowrap">0 筆記錄</span>
+    <span id="recordCount" class="text-[10px] bg-slate-700 px-2 py-1 rounded whitespace-nowrap ml-2 shrink-0">0 筆記錄</span>
   </header>
 
   <main class="p-4 max-w-lg mx-auto space-y-4">
@@ -114,18 +114,19 @@
       </button>
     </form>
 
-    <!-- 新增：搜尋與查詢區塊 -->
+    <!-- 🔍 查詢檢測記錄 (已修正排版) -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
       <h2 class="font-bold text-gray-700 text-sm border-b pb-2">🔍 查詢檢測記錄</h2>
       
       <div id="searchReader" class="w-full hidden rounded-lg overflow-hidden mb-2"></div>
       
+      <!-- 修正重點：加入 min-w-0 讓輸入框可縮短，shrink-0 確保按鈕不變形 -->
       <div class="flex gap-2">
-        <input type="text" id="searchInput" placeholder="輸入樣本編號..." class="flex-1 p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
-        <button type="button" onclick="toggleSearchScanner()" id="searchScanBtn" class="px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md flex items-center justify-center transition shadow-sm text-sm whitespace-nowrap">
+        <input type="text" id="searchInput" placeholder="樣本編號..." class="flex-1 min-w-0 p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
+        <button type="button" onclick="toggleSearchScanner()" id="searchScanBtn" class="px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md flex items-center justify-center transition shadow-sm text-sm whitespace-nowrap shrink-0">
           📷 掃描
         </button>
-        <button type="button" onclick="performSearch()" class="px-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md text-sm transition shadow-sm whitespace-nowrap">
+        <button type="button" onclick="performSearch()" class="px-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md text-sm transition shadow-sm whitespace-nowrap shrink-0">
           搜尋
         </button>
       </div>
@@ -136,6 +137,7 @@
       </div>
     </div>
 
+    <!-- 📂 資料庫備份與管理 -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
       <h2 class="font-bold text-gray-700 text-sm border-b pb-2">📂 資料庫備份與管理</h2>
       <div class="grid grid-cols-2 gap-2">
@@ -166,7 +168,6 @@
     let html5QrCode = null;
     let isScanning = false;
 
-    // 新增：搜尋相機變數
     let searchHtml5QrCode = null;
     let isSearchScanning = false;
 
@@ -178,7 +179,6 @@
       document.getElementById('sampleTime').value = `${hours}:${mins}`;
     }
 
-    // 停止「登記表單」的相機
     function stopRegistrationScanner() {
       if (isScanning && html5QrCode) {
         html5QrCode.stop().then(() => {
@@ -189,7 +189,6 @@
       }
     }
 
-    // 停止「搜尋欄」的相機
     function stopSearchScanner() {
       if (isSearchScanning && searchHtml5QrCode) {
         searchHtml5QrCode.stop().then(() => {
@@ -200,10 +199,8 @@
       }
     }
 
-    // 控制登記相機
     function toggleScanner() {
-      stopSearchScanner(); // 確保搜尋相機已關閉
-
+      stopSearchScanner();
       const readerElem = document.getElementById('reader');
       const btnText = document.getElementById('scanBtnText');
 
@@ -231,10 +228,8 @@
       }
     }
 
-    // 控制搜尋相機
     function toggleSearchScanner() {
-      stopRegistrationScanner(); // 確保登記相機已關閉
-
+      stopRegistrationScanner();
       const readerElem = document.getElementById('searchReader');
       const btnText = document.getElementById('searchScanBtn');
 
@@ -251,7 +246,7 @@
             document.getElementById('searchInput').value = decodedText;
             if (navigator.vibrate) navigator.vibrate(100);
             stopSearchScanner();
-            performSearch(); // 掃描成功後自動觸發搜尋
+            performSearch();
           },
           () => {} 
         ).catch(err => {
@@ -262,7 +257,6 @@
       }
     }
 
-    // 執行搜尋功能
     function performSearch() {
       const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
       const resultContainer = document.getElementById('searchResult');
@@ -323,7 +317,6 @@
       resultContainer.innerHTML = html;
     }
 
-    // 清除搜尋結果
     function clearSearch() {
       document.getElementById('searchInput').value = '';
       const resultContainer = document.getElementById('searchResult');
@@ -362,7 +355,6 @@
       records.unshift(newEntry);
       localStorage.setItem(DB_KEY, JSON.stringify(records));
       
-      // 清空欄位
       document.getElementById('sampleId').value = '';
       document.getElementById('oilName').value = '';
       document.getElementById('brandName').value = '';
