@@ -69,7 +69,6 @@
         </div>
       </div>
 
-      <!-- 修改：批次與折射率平排 -->
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1">批次 (Batch)</label>
@@ -115,6 +114,28 @@
       </button>
     </form>
 
+    <!-- 新增：搜尋與查詢區塊 -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
+      <h2 class="font-bold text-gray-700 text-sm border-b pb-2">🔍 查詢檢測記錄</h2>
+      
+      <div id="searchReader" class="w-full hidden rounded-lg overflow-hidden mb-2"></div>
+      
+      <div class="flex gap-2">
+        <input type="text" id="searchInput" placeholder="輸入樣本編號..." class="flex-1 p-2.5 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
+        <button type="button" onclick="toggleSearchScanner()" id="searchScanBtn" class="px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md flex items-center justify-center transition shadow-sm text-sm whitespace-nowrap">
+          📷 掃描
+        </button>
+        <button type="button" onclick="performSearch()" class="px-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md text-sm transition shadow-sm whitespace-nowrap">
+          搜尋
+        </button>
+      </div>
+
+      <!-- 搜尋結果顯示區域 -->
+      <div id="searchResult" class="hidden mt-3 space-y-2">
+        <!-- 結果會動態插入此處 -->
+      </div>
+    </div>
+
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
       <h2 class="font-bold text-gray-700 text-sm border-b pb-2">📂 資料庫備份與管理</h2>
       <div class="grid grid-cols-2 gap-2">
@@ -145,6 +166,10 @@
     let html5QrCode = null;
     let isScanning = false;
 
+    // 新增：搜尋相機變數
+    let searchHtml5QrCode = null;
+    let isSearchScanning = false;
+
     function initDefaults() {
       const now = new Date();
       document.getElementById('testDate').value = now.toISOString().split('T')[0];
@@ -153,16 +178,37 @@
       document.getElementById('sampleTime').value = `${hours}:${mins}`;
     }
 
+    // 停止「登記表單」的相機
+    function stopRegistrationScanner() {
+      if (isScanning && html5QrCode) {
+        html5QrCode.stop().then(() => {
+          document.getElementById('reader').classList.add('hidden');
+          document.getElementById('scanBtnText').innerText = "掃描玻片 QR Code";
+          isScanning = false;
+        }).catch(err => console.log(err));
+      }
+    }
+
+    // 停止「搜尋欄」的相機
+    function stopSearchScanner() {
+      if (isSearchScanning && searchHtml5QrCode) {
+        searchHtml5QrCode.stop().then(() => {
+          document.getElementById('searchReader').classList.add('hidden');
+          document.getElementById('searchScanBtn').innerHTML = "📷 掃描";
+          isSearchScanning = false;
+        }).catch(err => console.log(err));
+      }
+    }
+
+    // 控制登記相機
     function toggleScanner() {
+      stopSearchScanner(); // 確保搜尋相機已關閉
+
       const readerElem = document.getElementById('reader');
       const btnText = document.getElementById('scanBtnText');
 
       if (isScanning) {
-        html5QrCode.stop().then(() => {
-          readerElem.classList.add('hidden');
-          btnText.innerText = "掃描玻片 QR Code";
-          isScanning = false;
-        });
+        stopRegistrationScanner();
       } else {
         readerElem.classList.remove('hidden');
         btnText.innerText = "關閉相機";
@@ -174,17 +220,115 @@
             document.getElementById('sampleId').value = decodedText;
             initDefaults();
             if (navigator.vibrate) navigator.vibrate(100);
-            toggleScanner();
+            stopRegistrationScanner();
           },
           () => {} 
         ).catch(err => {
           alert("無法啟動相機，請確認已授權 Safari 相機權限。");
-          readerElem.classList.add('hidden');
-          btnText.innerText = "掃描玻片 QR Code";
-          isScanning = false;
+          stopRegistrationScanner();
         });
         isScanning = true;
       }
+    }
+
+    // 控制搜尋相機
+    function toggleSearchScanner() {
+      stopRegistrationScanner(); // 確保登記相機已關閉
+
+      const readerElem = document.getElementById('searchReader');
+      const btnText = document.getElementById('searchScanBtn');
+
+      if (isSearchScanning) {
+        stopSearchScanner();
+      } else {
+        readerElem.classList.remove('hidden');
+        btnText.innerHTML = "關閉相機";
+        searchHtml5QrCode = new Html5Qrcode("searchReader");
+        searchHtml5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (decodedText) => {
+            document.getElementById('searchInput').value = decodedText;
+            if (navigator.vibrate) navigator.vibrate(100);
+            stopSearchScanner();
+            performSearch(); // 掃描成功後自動觸發搜尋
+          },
+          () => {} 
+        ).catch(err => {
+          alert("無法啟動相機，請確認已授權 Safari 相機權限。");
+          stopSearchScanner();
+        });
+        isSearchScanning = true;
+      }
+    }
+
+    // 執行搜尋功能
+    function performSearch() {
+      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      const resultContainer = document.getElementById('searchResult');
+
+      if (!keyword) {
+        alert("請輸入樣本編號或進行掃碼");
+        return;
+      }
+
+      const records = getStoredData();
+      const matches = records.filter(r => r.sampleId.toLowerCase().includes(keyword));
+
+      resultContainer.innerHTML = '';
+      resultContainer.classList.remove('hidden');
+
+      if (matches.length === 0) {
+        resultContainer.innerHTML = `
+          <div class="text-center text-xs text-red-500 py-4 bg-red-50 rounded-lg border border-red-100 flex flex-col items-center gap-2">
+            <span>找不到包含「${keyword}」的記錄</span>
+            <button onclick="clearSearch()" class="text-gray-500 underline decoration-gray-400">清除並重新搜尋</button>
+          </div>`;
+        return;
+      }
+
+      let html = `
+        <div class="flex justify-between items-center mb-1 px-1">
+          <span class="text-xs font-bold text-indigo-800">找到 ${matches.length} 筆記錄：</span>
+          <button onclick="clearSearch()" class="text-xs text-gray-500 hover:text-gray-700 bg-gray-200 px-2.5 py-1 rounded transition">清除結果</button>
+        </div>`;
+
+      matches.forEach(r => {
+        let resultColor = 'text-gray-900';
+        if(r.testResult === '合格') resultColor = 'text-green-700';
+        if(r.testResult === '不合格') resultColor = 'text-red-600';
+        if(r.testResult === '複檢') resultColor = 'text-amber-600';
+
+        const remarkHtml = r.remarks ? `<div class="mt-2 text-gray-500 bg-white/60 p-2 rounded border border-indigo-100/50">${r.remarks}</div>` : '';
+        const batchHtml = r.batchId ? `<span class="text-xs text-indigo-400 ml-2">(批次: ${r.batchId})</span>` : '';
+
+        html += `
+          <div class="bg-indigo-50 p-3.5 rounded-xl border border-indigo-200 shadow-sm text-xs relative mb-2">
+            <div class="flex justify-between items-center pr-6 mb-1">
+              <span class="font-bold text-sm text-indigo-700"># ${r.sampleId}</span>
+              <span class="text-indigo-400/80">${r.testDate} ${r.sampleTime}</span>
+            </div>
+            <div class="text-indigo-900 font-medium mb-2 text-[13px]">
+              🧴 ${r.brandName || '--'} - ${r.oilName || '--'} ${batchHtml}
+            </div>
+            <div class="grid grid-cols-2 text-indigo-800 pt-1 border-t border-indigo-200/60">
+              <div class="py-1">折射率: <span class="font-mono text-indigo-950">${r.refractiveIndex || '--'}</span></div>
+              <div class="py-1">結果: <span class="font-bold ${resultColor}">${r.testResult}</span></div>
+            </div>
+            ${remarkHtml}
+            <button onclick="deleteRecord(${r.id}); performSearch();" class="absolute top-3 right-3 text-indigo-300 hover:text-red-500 text-sm font-bold transition">✕</button>
+          </div>
+        `;
+      });
+      resultContainer.innerHTML = html;
+    }
+
+    // 清除搜尋結果
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      const resultContainer = document.getElementById('searchResult');
+      resultContainer.classList.add('hidden');
+      resultContainer.innerHTML = '';
     }
 
     function getStoredData() {
@@ -206,7 +350,7 @@
         sampleId: document.getElementById('sampleId').value.trim(),
         oilName: document.getElementById('oilName').value.trim(),
         brandName: document.getElementById('brandName').value.trim(),
-        batchId: document.getElementById('batchId').value.trim(), // 記錄批次
+        batchId: document.getElementById('batchId').value.trim(),
         testDate: document.getElementById('testDate').value,
         sampleTime: document.getElementById('sampleTime').value,
         refractiveIndex: document.getElementById('refractiveIndex').value,
